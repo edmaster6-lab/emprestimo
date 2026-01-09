@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LoanMaster Pro - v0.4</title>
+    <title>LoanMaster Pro - v0.5</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -25,7 +25,6 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Logo no Topo */
         .logo-header {
             width: 150px;
             margin-bottom: 20px;
@@ -82,9 +81,10 @@
             color: #fff; padding: 10px; margin: 8px 0; border-radius: 5px; box-sizing: border-box;
         }
 
+        label { display: block; text-align: left; font-size: 0.85em; color: #888; margin-top: 10px; }
+
         .line { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--accent); text-align: left;}
 
-        /* Foto no Modal de Créditos */
         .avatar { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--primary); margin-bottom: 10px; }
     </style>
 </head>
@@ -99,8 +99,8 @@
     </div>
 
     <div class="selector-mes">
-        <label for="filtro-mes"><small>Exibir Mês:</small></label>
-        <input type="month" id="filtro-mes" onchange="render()">
+        <label for="filtro-mes" style="margin:0"><small>Exibir Mês:</small></label>
+        <input type="month" id="filtro-mes" onchange="render()" style="margin:0">
     </div>
 
     <div class="menu">
@@ -123,7 +123,7 @@
                 Este sistema foi desenvolvido para facilitar a gestão financeira e o controle de recebimentos. 
                 Agradecemos pela confiança no <b>LoanMaster Pro</b>.
             </p>
-            <p><small>Versão 0.4 - 2026</small></p>
+            <p><small>Versão 0.5 - 2026</small></p>
             <button class="btn btn-s" style="width:100%" onclick="fecharModal('m-creditos')">Fechar</button>
         </div>
     </div>
@@ -141,11 +141,15 @@
                 <option value="1">À Vista</option>
                 <option value="2">2 Parcelas</option>
                 <option value="3">3 Parcelas</option>
+                <option value="4">4 Parcelas</option>
                 <option value="6">6 Parcelas</option>
                 <option value="12">12 Parcelas</option>
             </select>
-            <input type="date" id="n-data">
-            <button class="btn btn-p" style="width:100%" onclick="salvarNovo()">SALVAR</button>
+            
+            <label for="n-data">dia da 1º parcela</label>
+            <input type="date" id="n-data" style="margin-top: 0;">
+            
+            <button class="btn btn-p" style="width:100%; margin-top: 15px;" onclick="salvarNovo()">SALVAR</button>
             <button class="btn btn-s" style="width:100%; margin-top:8px" onclick="fecharModal('m-novo')">Cancelar</button>
         </div>
     </div>
@@ -229,10 +233,7 @@
                     parcN: (i+1) + "/" + qtd
                 });
             }
-            salvar();
-            render();
-            fecharModal('m-novo');
-            limparForm();
+            salvar(); render(); fecharModal('m-novo'); limparForm();
         }
 
         function render() {
