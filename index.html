@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoanMaster Pro - v0.2</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --accent: #333;
+            --primary: #ffffff;
+            --success: #4caf50;
+            --danger: #ff5252;
+            --text: #e0e0e0;
+        }
+
+        body {
+            font-family: sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .dash {
+            width: 100%; max-width: 450px;
+            background: var(--card); border-radius: 12px;
+            display: flex; justify-content: space-around;
+            padding: 15px; margin-bottom: 20px; border: 1px solid var(--accent);
+        }
+        .dash div { text-align: center; }
+        .dash small { display: block; color: #888; font-size: 0.8em; }
+        .dash b { font-size: 1.2em; }
+
+        .selector-mes {
+            width: 100%; max-width: 450px;
+            margin-bottom: 15px;
+            display: flex; gap: 10px; align-items: center;
+        }
+
+        .menu { display: flex; gap: 10px; width: 100%; max-width: 450px; margin-bottom: 20px; }
+        .btn {
+            flex: 1; padding: 12px; border: none; border-radius: 8px;
+            font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-p { background: var(--primary); color: #000; }
+        .btn-s { background: var(--accent); color: #fff; }
+        .btn-ok { background: var(--success); color: #fff; width: 100%; margin-top: 10px; }
+        .btn-del { background: var(--danger); color: #fff; padding: 5px 10px; font-size: 0.7em; }
+
+        .card {
+            width: 100%; max-width: 450px;
+            background: var(--card); padding: 15px; border-radius: 10px;
+            margin-bottom: 12px; border-left: 4px solid var(--primary);
+            box-sizing: border-box;
+        }
+        .card-top { display: flex; justify-content: space-between; cursor: pointer; }
+
+        .modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.8); z-index: 100;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-cont {
+            background: var(--card); width: 100%; max-width: 400px;
+            padding: 20px; border-radius: 15px; max-height: 80vh; overflow-y: auto;
+        }
+
+        input, select, textarea {
+            width: 100%; background: #2a2a2a; border: 1px solid var(--accent);
+            color: #fff; padding: 10px; margin: 8px 0; border-radius: 5px; box-sizing: border-box;
+        }
+
+        .line { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--accent); }
+    </style>
+</head>
+<body>
+
+    <h2>LoanMaster Pro</h2>
+
+    <div class="dash">
+        <div><small>Investido (Mês)</small><b id="total-v">R$ 0,00</b></div>
+        <div><small>Receber (Mês)</small><b id="total-r">R$ 0,00</b></div>
+    </div>
+
+    <div class="selector-mes">
+        <label for="filtro-mes"><small>Exibir Mês:</small></label>
+        <input type="month" id="filtro-mes" onchange="render()">
+    </div>
+
+    <div class="menu">
+        <button class="btn btn-p" onclick="abrirModal('m-novo')"><i class="fas fa-plus"></i> Novo</button>
+        <button class="btn btn-s" onclick="abrirClientes()"><i class="fas fa-users"></i> Clientes</button>
+        <button class="btn btn-s" style="flex:0.3" onclick="abrirModal('m-cfg')"><i class="fas fa-cog"></i></button>
+    </div>
+
+    <div id="lista-vencimentos" style="width: 100%; max-width: 450px;"></div>
+
+    <div id="m-novo" class="modal">
+        <div class="modal-cont">
+            <h3>Novo Empréstimo</h3>
+            <input type="text" id="n-nome" placeholder="Nome do Cliente">
+            <input type="tel" id="n-tel" placeholder="WhatsApp">
+            <div style="display:flex; gap:10px">
+                <input type="number" id="n-valor" placeholder="Valor R$">
+                <input type="number" id="n-juros" placeholder="Juros %">
+            </div>
+            <select id="n-parc">
+                <option value="1">À Vista</option>
+                <option value="2">2 Parcelas</option>
+                <option value="3">3 Parcelas</option>
+                <option value="4">4 Parcelas</option>
+                <option value="6">6 Parcelas</option>
+                <option value="12">12 Parcelas</option>
+            </select>
+            <input type="date" id="n-data">
+            <button class="btn btn-p" style="width:100%" onclick="salvarNovo()">SALVAR</button>
+            <button class="btn btn-s" style="width:100%; margin-top:8px" onclick="fecharModal('m-novo')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="m-ficha" class="modal">
+        <div class="modal-cont">
+            <h3 id="f-nome"></h3>
+            <p id="f-pendencia"></p>
+            <button class="btn btn-p" style="width:100%" onclick="novoDaFicha()">+ Novo Empréstimo</button>
+            <hr style="border:1px solid #333; margin:15px 0">
+            <div style="display:flex; justify-content:space-between">
+                <b>Histórico</b>
+                <button class="btn-del" onclick="limparHistorico()">Limpar</button>
+            </div>
+            <div id="f-hist" style="margin-top:10px"></div>
+            <button class="btn btn-s" style="width:100%; margin-top:15px" onclick="fecharModal('m-ficha')">Voltar</button>
+        </div>
+    </div>
+
+    <div id="m-cfg" class="modal">
+        <div class="modal-cont">
+            <h3>Mensagem de Recibo</h3>
+            <textarea id="c-msg" rows="4"></textarea>
+            <button class="btn btn-p" style="width:100%" onclick="salvarConfig()">Salvar</button>
+            <button class="btn btn-s" style="width:100%; margin-top:5px" onclick="fecharModal('m-cfg')">Sair</button>
+        </div>
+    </div>
+
+    <div id="m-clientes" class="modal">
+        <div class="modal-cont">
+            <h3>Seus Clientes</h3>
+            <div id="l-clientes"></div>
+            <button class="btn btn-s" style="width:100%; margin-top:15px" onclick="fecharModal('m-clientes')">Fechar</button>
+        </div>
+    </div>
+
+    <script>
+        let DB = JSON.parse(localStorage.getItem('loanmaster_db')) || {
+            parcelas: [],
+            historico: [],
+            config: { msg: "Olá [NOME], recebemos seu pagamento de [VALOR] referente à parcela [PARC]. Obrigado!" }
+        };
+
+        const salvar = () => localStorage.setItem('loanmaster_db', JSON.stringify(DB));
+        const abrirModal = (id) => document.getElementById(id).style.display = 'flex';
+        const fecharModal = (id) => document.getElementById(id).style.display = 'none';
+
+        // Inicializa o seletor com o mês atual
+        function initSeletorMes() {
+            const agora = new Date();
+            const mesFormatado = agora.toISOString().substring(0, 7);
+            document.getElementById('filtro-mes').value = mesFormatado;
+        }
+
+        function salvarNovo() {
+            const nome = document.getElementById('n-nome').value;
+            const tel = document.getElementById('n-tel').value;
+            const valor = parseFloat(document.getElementById('n-valor').value);
+            const juros = parseFloat(document.getElementById('n-juros').value) || 0;
+            const qtd = parseInt(document.getElementById('n-parc').value);
+            const data = document.getElementById('n-data').value;
+
+            if(!nome || !valor || !data) return alert("Preencha todos os campos!");
+
+            const total = valor + (valor * (juros/100));
+            const vParc = total / qtd;
+            const vOrig = valor / qtd;
+
+            for(let i = 0; i < qtd; i++) {
+                let d = new Date(data + "T00:00:00");
+                d.setMonth(d.getMonth() + i);
+                
+                DB.parcelas.push({
+                    id: Date.now() + Math.random(),
+                    nome, tel,
+                    venc: d.toISOString().split('T')[0],
+                    vParc: vParc,
+                    vOrig: vOrig,
+                    parcN: (i+1) + "/" + qtd
+                });
+            }
+
+            salvar();
+            render();
+            fecharModal('m-novo');
+            limparForm();
+        }
+
+        function render() {
+            const lista = document.getElementById('lista-vencimentos');
+            const mesSelecionado = document.getElementById('filtro-mes').value; // Formato YYYY-MM
+            lista.innerHTML = "";
+            let tV = 0, tR = 0;
+
+            DB.parcelas.sort((a,b) => new Date(a.venc) - new Date(b.venc));
+
+            DB.parcelas.forEach(p => {
+                // Filtra apenas parcelas que começam com o YYYY-MM selecionado
+                if (p.venc.startsWith(mesSelecionado)) {
+                    tV += p.vOrig;
+                    tR += p.vParc;
+                    lista.innerHTML += `
+                        <div class="card">
+                            <div class="card-top" onclick="abrirFicha('${p.nome}')">
+                                <div><b>${p.nome}</b><br><small>${p.venc.split('-').reverse().join('/')}</small></div>
+                                <div style="text-align:right"><b>R$ ${p.vParc.toFixed(2)}</b><br><small>Parc: ${p.parcN}</small></div>
+                            </div>
+                            <button class="btn-ok" onclick="pagar('${p.id}')">PAGO</button>
+                        </div>
+                    `;
+                }
+            });
+
+            document.getElementById('total-v').innerText = "R$ " + tV.toFixed(2);
+            document.getElementById('total-r').innerText = "R$ " + tR.toFixed(2);
+        }
+
+        function pagar(id) {
+            const idx = DB.parcelas.findIndex(p => p.id == id);
+            const p = DB.parcelas[idx];
+            DB.historico.push({ nome: p.nome, valor: p.vParc, data: new Date().toLocaleDateString(), info: p.parcN });
+            DB.parcelas.splice(idx, 1);
+            salvar();
+            render();
+            const texto = DB.config.msg.replace("[NOME]", p.nome).replace("[VALOR]", "R$ " + p.vParc.toFixed(2)).replace("[PARC]", p.parcN);
+            window.open(`https://wa.me/55${p.tel.replace(/\D/g,'')}?text=${encodeURIComponent(texto)}`);
+        }
+
+        function abrirFicha(nome) {
+            window.clienteAtual = nome;
+            const pend = DB.parcelas.filter(p => p.nome === nome);
+            const total = pend.reduce((acc, cur) => acc + cur.vParc, 0);
+            const hist = DB.historico.filter(h => h.nome === nome);
+            document.getElementById('f-nome').innerText = nome;
+            document.getElementById('f-pendencia').innerHTML = `Pendência Total: <b>R$ ${total.toFixed(2)}</b>`;
+            const histDiv = document.getElementById('f-hist');
+            histDiv.innerHTML = hist.length ? "" : "<small>Nenhum registro.</small>";
+            hist.slice().reverse().forEach(h => {
+                histDiv.innerHTML += `<div class="line"><span>${h.data} (${h.info})</span><span style="color:var(--success)">R$ ${h.valor.toFixed(2)}</span></div>`;
+            });
+            abrirModal('m-ficha');
+        }
+
+        function limparHistorico() {
+            if(confirm("Apagar histórico de " + window.clienteAtual + "?")) {
+                DB.historico = DB.historico.filter(h => h.nome !== window.clienteAtual);
+                salvar();
+                abrirFicha(window.clienteAtual);
+            }
+        }
+
+        function abrirClientes() {
+            const nomes = [...new Set([...DB.parcelas.map(p => p.nome), ...DB.historico.map(h => h.nome)])].sort();
+            const div = document.getElementById('l-clientes');
+            div.innerHTML = "";
+            nomes.forEach(n => {
+                div.innerHTML += `<div class="line" onclick="abrirFicha('${n}'); fecharModal('m-clientes')" style="cursor:pointer"><b>${n}</b> <i class="fas fa-chevron-right"></i></div>`;
+            });
+            abrirModal('m-clientes');
+        }
+
+        function novoDaFicha() {
+            const nome = window.clienteAtual;
+            const p = DB.parcelas.find(x => x.nome === nome) || DB.historico.find(x => x.nome === nome);
+            fecharModal('m-ficha');
+            document.getElementById('n-nome').value = nome;
+            document.getElementById('n-tel').value = p ? p.tel : "";
+            abrirModal('m-novo');
+        }
+
+        function salvarConfig() {
+            DB.config.msg = document.getElementById('c-msg').value;
+            salvar();
+            alert("Salvo!");
+            fecharModal('m-cfg');
+        }
+
+        function limparForm() {
+            document.getElementById('n-nome').value = "";
+            document.getElementById('n-tel').value = "";
+            document.getElementById('n-valor').value = "";
+            document.getElementById('n-juros').value = "";
+        }
+
+        window.onload = () => {
+            initSeletorMes();
+            document.getElementById('c-msg').value = DB.config.msg;
+            render();
+        };
+    </script>
+</body>
+</html>
